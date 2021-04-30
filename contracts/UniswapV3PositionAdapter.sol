@@ -3,7 +3,7 @@ pragma solidity =0.7.6;
 pragma abicoder v2;
 
 import "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
-import "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
+import "@uniswap/v3-core/contracts/interfaces/pool/IUniswapV3PoolState.sol";
 import "@uniswap/v3-core/contracts/libraries/FixedPoint128.sol";
 import "@uniswap/v3-core/contracts/libraries/FullMath.sol";
 import "@uniswap/v3-core/contracts/libraries/TickMath.sol";
@@ -32,7 +32,7 @@ contract UniswapV3PositionAdapter is IUniswapV3PositionAdapter {
 
         // Compute pool address and its current state
         address pool = getPool(positionManager, position.token0, position.token1, position.fee);
-        (uint160 sqrtPriceX96, int24 tickCurrent, , , , , ) = IUniswapV3Pool(pool).slot0();
+        (uint160 sqrtPriceX96, int24 tickCurrent, , , , , ) = IUniswapV3PoolState(pool).slot0();
 
         // Compute amounts that are currently in the pool
         (positionDetails[0].amount, positionDetails[1].amount) = getAmounts(
@@ -123,8 +123,8 @@ contract UniswapV3PositionAdapter is IUniswapV3PositionAdapter {
         int24 tickLower,
         int24 tickUpper
     ) internal view returns (uint256 feeGrowthInside0, uint256 feeGrowthInside1) {
-        uint256 feeGrowthGlobal0 = IUniswapV3Pool(pool).feeGrowthGlobal0X128();
-        uint256 feeGrowthGlobal1 = IUniswapV3Pool(pool).feeGrowthGlobal1X128();
+        uint256 feeGrowthGlobal0 = IUniswapV3PoolState(pool).feeGrowthGlobal0X128();
+        uint256 feeGrowthGlobal1 = IUniswapV3PoolState(pool).feeGrowthGlobal1X128();
 
         (uint256 feeGrowthBelow0, uint256 feeGrowthBelow1) =
             getFeeGrowthTick(
@@ -166,7 +166,7 @@ contract UniswapV3PositionAdapter is IUniswapV3PositionAdapter {
         uint256 feeGrowthGlobal1
     ) internal view returns (uint256 feeGrowthTick0, uint256 feeGrowthTick1) {
         (, , uint256 feeGrowthOutside0, uint256 feeGrowthOutside1, , , , ) =
-            IUniswapV3Pool(pool).ticks(tick);
+            IUniswapV3PoolState(pool).ticks(tick);
 
         (feeGrowthTick0, feeGrowthTick1) = (useFeeGrowthOutside)
             ? (feeGrowthOutside0, feeGrowthOutside1)
