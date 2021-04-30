@@ -1,0 +1,20 @@
+{
+  "extends": "solhint:all",
+  "plugins": ["prettier"],
+  "rules": {
+    "mark-callable-contracts": ["off"],
+    "reason-string": ["error", { "maxLength": 50 }],
+    "function-max-lines": ["error", 99],
+    "compiler-version": ["error", "0.8.1"],
+    "private-vars-leading-underscore": ["off"],
+    "const-name-snakecase": ["off"],
+    "func-visibility": [
+      "warn",
+      {
+        "ignoreConstructors": true
+      }
+    ],
+    "prettier/prettier": "warn",
+    "comprehensive-interface": ["off"]
+  }
+}

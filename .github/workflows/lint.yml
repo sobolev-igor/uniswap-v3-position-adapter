@@ -1,0 +1,24 @@
+name: lint
+on: push
+
+jobs:
+  lint:
+    name: lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v2
+      - name: setup-node
+        uses: actions/setup-node@v1
+        with:
+          node-version: "10.x"
+      - name: webfactory/ssh-agent
+        uses: webfactory/ssh-agent@v0.4.1
+        with:
+          ssh-private-key: ${{ secrets.PRIVATE_SSH }}
+      - name: install
+        run: npm ci
+      - name: build
+        run: npm run compile
+      - name: lint
+        run: npm run lint
