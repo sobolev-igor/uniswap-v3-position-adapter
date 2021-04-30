@@ -1,0 +1,68 @@
+{
+  "name": "zerion-defi-sdk",
+  "version": "1.0.0",
+  "main": "truffle.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "postinstall": "husky install",
+    "compile": "npx hardhat compile",
+    "deploy:development": "npx hardhat deploy --network development",
+    "deploy:mainnet": "npx hardhat deploy --network mainnet",
+    "deploy:kovan": "npx hardhat deploy --network kovan",
+    "test": "npx hardhat test --show-stack-traces",
+    "coverage": "npx hardhat coverage --network hardhat",
+    "lint:solhint": "npx solhint \"contracts/**/*.sol\"",
+    "lint:eslint": "eslint .",
+    "lint": "npm run lint:solhint && npm run lint:eslint"
+  },
+  "lint-staged": {
+    ".": "npx prettier --write",
+    "test/**/*.js": "npx eslint --fix",
+    "migrations_scripts/*.js": "npx eslint --fix"
+  },
+  "author": "Zerion Inc.",
+  "license": "LGPL-3.0-only",
+  "repository": "https://github.com/zeriontech/defi-sdk",
+  "dependencies": {
+    "@uniswap/v3-core": "1.0.0-rc.2",
+    "@uniswap/v3-periphery": "1.0.0-beta.23"
+  },
+  "devDependencies": {
+    "@babel/core": "7.13.16",
+    "@babel/preset-env": "7.13.15",
+    "@babel/register": "7.13.16",
+    "@codechecks/client": "0.1.10",
+    "@nomiclabs/hardhat-ethers": "2.0.2",
+    "@nomiclabs/hardhat-waffle": "2.0.1",
+    "@types/chai": "4.2.16",
+    "@types/mocha": "8.2.2",
+    "@types/node": "14.14.41",
+    "chai": "4.3.4",
+    "core-js": "3.10.2",
+    "dotenv": "8.2.0",
+    "eslint": "7.24.0",
+    "eslint-config-airbnb-base": "14.2.1",
+    "eslint-plugin-import": "2.22.1",
+    "ethereum-waffle": "3.3.0",
+    "ethers": "5.1.3",
+    "ganache-cli": "6.12.2",
+    "hardhat": "2.2.0",
+    "hardhat-docgen": "1.1.0",
+    "hardhat-gas-reporter": "1.0.4",
+    "hardhat-tracer": "1.0.0-alpha.5",
+    "husky": "6.0.0",
+    "lint-staged": "10.5.4",
+    "mrm": "3.0.1",
+    "pinst": "2.1.6",
+    "prettier": "2.2.1",
+    "prettier-plugin-solidity": "1.0.0-beta.9",
+    "regenerator-runtime": "0.13.7",
+    "solhint": "3.3.4",
+    "solhint-plugin-prettier": "0.0.5",
+    "solidity-coverage": "0.7.16",
+    "ts-node": "9.1.1",
+    "typescript": "4.2.4"
+  }
+}
