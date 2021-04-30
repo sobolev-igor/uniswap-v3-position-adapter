@@ -42,8 +42,8 @@ contract UniswapV3PositionAdapter is IUniswapV3PositionAdapter {
             position.liquidity
         );
 
-        // Compute fee growths that are not in `tokensOwed{0,1}` yet
-        (positionDetails[0].feeGrowth, positionDetails[1].feeGrowth) = getFeeGrowths(
+        // Compute fees that are not in `tokensOwed{0,1}` yet
+        (positionDetails[0].fee, positionDetails[1].fee) = getFees(
             pool,
             tickCurrent,
             position.tickLower,
@@ -70,7 +70,7 @@ contract UniswapV3PositionAdapter is IUniswapV3PositionAdapter {
         pool = IUniswapV3Factory(factory).getPool(token0, token1, fee);
     }
 
-    /// @notice Computes `feeGrowth{0,1}` -- fee growths that are not in `tokensOwed{0,1}` yet
+    /// @notice Computes `fee{0,1}` -- fees that are not in `tokensOwed{0,1}` yet
     /// @param pool Pool's address
     /// @param tickCurrent Pool's current tick
     /// @param tickLower Position's lower tick
@@ -78,9 +78,9 @@ contract UniswapV3PositionAdapter is IUniswapV3PositionAdapter {
     /// @param feeGrowthInside0Last Position's fee growth for `token0`
     /// @param feeGrowthInside1Last Position's fee growth for `token1`
     /// @param liquidity Position's liquidity
-    /// @return feeGrowth0 Amount of fees that are not saved in the position for `token0`
-    /// @return feeGrowth1 Amount of fees that are not saved in the position for `token1`
-    function getFeeGrowths(
+    /// @return fee0 Amount of fees that are not saved in the position for `token0`
+    /// @return fee1 Amount of fees that are not saved in the position for `token1`
+    function getFees(
         address pool,
         int24 tickCurrent,
         int24 tickLower,
@@ -88,11 +88,11 @@ contract UniswapV3PositionAdapter is IUniswapV3PositionAdapter {
         uint256 feeGrowthInside0Last,
         uint256 feeGrowthInside1Last,
         uint128 liquidity
-    ) internal view returns (uint256 feeGrowth0, uint256 feeGrowth1) {
+    ) internal view returns (uint256 fee0, uint256 fee1) {
         (uint256 feeGrowthInside0, uint256 feeGrowthInside1) =
             getFeeGrowthInside(pool, tickCurrent, tickLower, tickUpper);
 
-        (feeGrowth0, feeGrowth1) = (
+        (fee0, fee1) = (
             uint256(
                 FullMath.mulDiv(
                     feeGrowthInside0 - feeGrowthInside0Last,

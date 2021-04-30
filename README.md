@@ -7,13 +7,13 @@ Every Uniswap V3 position is interpreted as a pair of `PositionDetail` structs. 
 
 1. amount of tokens that are currently used as a pool liquidity (`amount`);
 2. amount of tokens that are not used as a pool liquidity, but are still in Unispwap's **NonfungiblePositionManager** contract (`tokensOwed`);
-3. amount of tokens that will be collected as fees on the next interaction with Uniswap's **NonfungiblePositionManager** contract (`feeGrowth`).
+3. amount of tokens that will be collected as fees on the next interaction with Uniswap's **NonfungiblePositionManager** contract (`fee`).
 
 ```
 struct PositionDetail {
     address token;
     uint256 amount;
     uint256 tokensOwed;
-    uint256 feeGrowth;
+    uint256 fee;
 }
 ```

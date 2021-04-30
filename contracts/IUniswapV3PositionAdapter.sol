@@ -6,7 +6,7 @@ struct PositionDetail {
     address token;
     uint256 amount;
     uint256 tokensOwed;
-    uint256 feeGrowth;
+    uint256 fee;
 }
 
 interface IUniswapV3PositionAdapter {
@@ -14,7 +14,7 @@ interface IUniswapV3PositionAdapter {
     /// @dev Throws if the token ID is not valid
     /// @param positionManager The address of the Uniswap V3 NonfungiblePositionManager contract
     /// @param tokenId The ID of the token that represents the position
-    /// @return positionDetails Two structs with details on underlying tokens
+    /// @return positionDetails Two structs with details about underlying tokens
     function getPositionDetails(address positionManager, uint256 tokenId)
         external
         view
