@@ -8,7 +8,6 @@ import "@uniswap/v3-core/contracts/libraries/FixedPoint128.sol";
 import "@uniswap/v3-core/contracts/libraries/FullMath.sol";
 import "@uniswap/v3-core/contracts/libraries/TickMath.sol";
 import "@uniswap/v3-periphery/contracts/libraries/LiquidityAmounts.sol";
-import "@uniswap/v3-periphery/contracts/libraries/PositionKey.sol";
 
 import "./IUniswapV3PositionAdapter.sol";
 import "./INonfungiblePositionManager.sol";
@@ -21,106 +20,40 @@ contract UniswapV3PositionAdapter is IUniswapV3PositionAdapter {
         override
         returns (PositionDetail[2] memory positionDetails)
     {
+        // Get the position from the position manager
         Position memory position = INonfungiblePositionManager(positionManager).positions(tokenId);
 
-        // Compute pool address
+        // Save `token{0,1}` and `tokensOwed{0,1}` from the position
+        (positionDetails[0].token, positionDetails[1].token) = (position.token0, position.token1);
+        (positionDetails[0].tokensOwed, positionDetails[1].tokensOwed) = (position.tokensOwed0, position.tokensOwed1);
+
+        // Compute pool address and its current state
         address pool = getPool(positionManager, position.token0, position.token1, position.fee);
+        (uint160 sqrtPriceX96, int24 tickCurrent, , , , , ) = IUniswapV3Pool(pool).slot0();
 
-        // Compute amount{0,1} that are currently in the pool
-        (uint256 amount0, uint256 amount1) =
-            getAmounts(pool, position.tickLower, position.tickUpper, position.liquidity);
+        // Compute amounts that are currently in the pool
+        (positionDetails[0].amount, positionDetails[1].amount) =
+            getAmounts(sqrtPriceX96, position.tickLower, position.tickUpper, position.liquidity);
 
-        // Compute feeGrowth{0,1} that are not in tokensOwed{0,1} yet
-        (uint256 feeGrowth0, uint256 feeGrowth1) =
+        // Compute fee growths that are not in `tokensOwed{0,1}` yet
+        (positionDetails[0].feeGrowth, positionDetails[1].feeGrowth) =
             getFeeGrowths(
-                positionManager,
                 pool,
+                tickCurrent,
                 position.tickLower,
                 position.tickUpper,
                 position.feeGrowthInside0LastX128,
                 position.feeGrowthInside1LastX128,
                 position.liquidity
             );
-
-        positionDetails = [
-            PositionDetail({
-                token: position.token0,
-                amount: amount0,
-                tokensOwed: position.tokensOwed0,
-                feeGrowth: feeGrowth0
-            }),
-            PositionDetail({
-                token: position.token1,
-                amount: amount1,
-                tokensOwed: position.tokensOwed1,
-                feeGrowth: feeGrowth1
-            })
-        ];
     }
 
-    /// @notice Computes feeGrowth{0,1} that are not in tokensOwed{0,1} yet
+    /// @notice Computes the pool's address given the position's parameters
     /// @param positionManager The address of the Uniswap V3 NonfungiblePositionManager contract
-    /// @param pool Pool's address
-    /// @param tickLower Position's lower tick
-    /// @param tickUpper Position's upper tick
-    /// @param feeGrowthInside0LastX128 Position's fee growth for token0
-    /// @param feeGrowthInside1LastX128 Position's fee growth for token1
-    /// @param liquidity Position's liquidity
-    /// @return feeGrowth0 Amount of fees that are not saved in the position for token0
-    /// @return feeGrowth1 Amount of fees that are not saved in the position for token1
-    function getFeeGrowths(
-        address positionManager,
-        address pool,
-        int24 tickLower,
-        int24 tickUpper,
-        uint256 feeGrowthInside0LastX128,
-        uint256 feeGrowthInside1LastX128,
-        uint128 liquidity
-    ) internal view returns (uint256 feeGrowth0, uint256 feeGrowth1) {
-        bytes32 positionKey = PositionKey.compute(positionManager, tickLower, tickUpper);
-
-        (, uint256 feeGrowthInside0LastX128Current, uint256 feeGrowthInside1LastX128Current, , ) =
-            IUniswapV3Pool(pool).positions(positionKey);
-        feeGrowth0 = getFeeGrowth(
-            feeGrowthInside0LastX128Current,
-            feeGrowthInside0LastX128,
-            liquidity
-        );
-        feeGrowth1 = getFeeGrowth(
-            feeGrowthInside1LastX128Current,
-            feeGrowthInside1LastX128,
-            liquidity
-        );
-    }
-
-    /// @notice Computes amount{0,1} that are currently in the pool
-    /// @param pool Pool's address
-    /// @param tickLower Position's lower tick
-    /// @param tickUpper Position's upper tick
-    /// @param liquidity Position's liquidity
-    /// @return amount0 Amount of token0 that are currently in the pool
-    /// @return amount1 Amount of token1 that are currently in the pool
-    function getAmounts(
-        address pool,
-        int24 tickLower,
-        int24 tickUpper,
-        uint128 liquidity
-    ) internal view returns (uint256 amount0, uint256 amount1) {
-        (uint160 sqrtPriceX96, , , , , , ) = IUniswapV3Pool(pool).slot0();
-        (amount0, amount1) = LiquidityAmounts.getAmountsForLiquidity(
-            sqrtPriceX96,
-            TickMath.getSqrtRatioAtTick(tickLower),
-            TickMath.getSqrtRatioAtTick(tickUpper),
-            liquidity
-        );
-    }
-
-    /// @notice Computes the pool address given the positions' parameters
-    /// @param positionManager The address of the Uniswap V3 NonfungiblePositionManager contract
-    /// @param token0 Position's token0
-    /// @param token1 Position's token1
-    /// @param fee Position's fee
-    /// @return pool Address of the pool
+    /// @param token0 Position's `token0`
+    /// @param token1 Position's `token1`
+    /// @param fee Position's `fee`
+    /// @return pool Pool's address
     function getPool(
         address positionManager,
         address token0,
@@ -131,23 +64,131 @@ contract UniswapV3PositionAdapter is IUniswapV3PositionAdapter {
         pool = IUniswapV3Factory(factory).getPool(token0, token1, fee);
     }
 
-    /// @notice Computes feeGrowth given the required parameters
-    /// @param feeGrowthInsideLastX128Current Pool's fee growth for the position's range
-    /// @param feeGrowthInsideLastX128 Position's fee growth
+    /// @notice Computes `feeGrowth{0,1}` -- fee growths that are not in `tokensOwed{0,1}` yet
+    /// @param pool Pool's address
+    /// @param tickCurrent Pool's current tick
+    /// @param tickLower Position's lower tick
+    /// @param tickUpper Position's upper tick
+    /// @param feeGrowthInside0Last Position's fee growth for `token0`
+    /// @param feeGrowthInside1Last Position's fee growth for `token1`
     /// @param liquidity Position's liquidity
-    /// @return feeGrowth Amount of fees that are not saved in the position
-    function getFeeGrowth(
-        uint256 feeGrowthInsideLastX128Current,
-        uint256 feeGrowthInsideLastX128,
+    /// @return feeGrowth0 Amount of fees that are not saved in the position for `token0`
+    /// @return feeGrowth1 Amount of fees that are not saved in the position for `token1`
+    function getFeeGrowths(
+        address pool,
+        int24 tickCurrent,
+        int24 tickLower,
+        int24 tickUpper,
+        uint256 feeGrowthInside0Last,
+        uint256 feeGrowthInside1Last,
         uint128 liquidity
-    ) internal pure returns (uint256 feeGrowth) {
-        return
+    ) internal view returns (uint256 feeGrowth0, uint256 feeGrowth1) {
+        (uint256 feeGrowthInside0, uint256 feeGrowthInside1) = getFeeGrowthInside(
+            pool,
+            tickCurrent,
+            tickLower,
+            tickUpper
+        );
+
+        (feeGrowth0, feeGrowth1) = (
             uint256(
                 FullMath.mulDiv(
-                    feeGrowthInsideLastX128Current - feeGrowthInsideLastX128,
+                    feeGrowthInside0 - feeGrowthInside0Last,
                     liquidity,
                     FixedPoint128.Q128
                 )
+            ),
+            uint256(
+                FullMath.mulDiv(
+                    feeGrowthInside1 - feeGrowthInside1Last,
+                    liquidity,
+                    FixedPoint128.Q128
+                )
+            )
+        );
+    }
+
+    /// @notice Computes `feeGrowthInside{0,1}`
+    /// @param pool Pool's address
+    /// @param tickCurrent Pool's current tick
+    /// @param tickLower Position's lower tick
+    /// @param tickUpper Position's upper tick
+    /// @return feeGrowthInside0 Pool's fee growth for the position for `token0`
+    /// @return feeGrowthInside1 Pool's fee growth for the position for `token1`
+    function getFeeGrowthInside(
+        address pool,
+        int24 tickCurrent,
+        int24 tickLower,
+        int24 tickUpper
+    ) internal view returns (uint256 feeGrowthInside0, uint256 feeGrowthInside1) {
+        uint256 feeGrowthGlobal0 = IUniswapV3Pool(pool).feeGrowthGlobal0X128();
+        uint256 feeGrowthGlobal1 = IUniswapV3Pool(pool).feeGrowthGlobal1X128();
+
+        (uint256 feeGrowthBelow0, uint256 feeGrowthBelow1) = getFeeGrowthTick(
+            pool, tickLower, tickCurrent >= tickLower, feeGrowthGlobal0, feeGrowthGlobal1
+        );
+
+        (uint256 feeGrowthAbove0, uint256 feeGrowthAbove1) = getFeeGrowthTick(
+            pool, tickUpper, tickCurrent < tickUpper, feeGrowthGlobal0, feeGrowthGlobal1
+        );
+
+        (feeGrowthInside0, feeGrowthInside1) = (
+            feeGrowthGlobal0 - feeGrowthBelow0 - feeGrowthAbove0,
+            feeGrowthGlobal1 - feeGrowthBelow1 - feeGrowthAbove1
+        );
+    }
+
+    /// @notice Computes `feeGrowthTick{0,1}` for the one of boundary ticks (above or below)
+    /// @param pool Pool's address
+    /// @param tick Pool's boundary tick
+    /// @param useFeeGrowthOutside Whether to use only `feeGrowthOutside`
+    /// @param feeGrowthGlobal0 Pool's global fee growth for `token0`
+    /// @param feeGrowthGlobal1 Pool's global fee growth for `token1`
+    /// @return feeGrowthTick0 Pool's fee growth for the tick for `token0`
+    /// @return feeGrowthTick1 Pool's fee growth for the tick for `token1`
+    function getFeeGrowthTick(
+        address pool,
+        int24 tick,
+        bool useFeeGrowthOutside,
+        uint256 feeGrowthGlobal0,
+        uint256 feeGrowthGlobal1
+    ) internal view returns (uint256 feeGrowthTick0, uint256 feeGrowthTick1) {
+        (
+            ,
+            ,
+            uint256 feeGrowthOutside0,
+            uint256 feeGrowthOutside1,
+            ,
+            ,
+            ,
+        ) = IUniswapV3Pool(pool).ticks(tick);
+
+        (feeGrowthTick0, feeGrowthTick1) = (useFeeGrowthOutside)
+            ? (feeGrowthOutside0, feeGrowthOutside1)
+            : (
+                feeGrowthGlobal0 - feeGrowthOutside0,
+                feeGrowthGlobal1 - feeGrowthOutside1
             );
+    }
+
+    /// @notice Computes `amount{0,1}` -- amounts that are currently in the pool
+    /// @param sqrtPriceX96 Pool's current price
+    /// @param tickLower Position's lower tick
+    /// @param tickUpper Position's upper tick
+    /// @param liquidity Position's liquidity
+    /// @return amount0 Amount of `token0` that are currently in the pool
+    /// @return amount1 Amount of `token1` that are currently in the pool
+    function getAmounts(
+        uint160 sqrtPriceX96,
+        int24 tickLower,
+        int24 tickUpper,
+        uint128 liquidity
+    ) internal pure returns (uint256 amount0, uint256 amount1) {
+        (amount0, amount1) = LiquidityAmounts.getAmountsForLiquidity(
+            sqrtPriceX96,
+            TickMath.getSqrtRatioAtTick(tickLower),
+            TickMath.getSqrtRatioAtTick(tickUpper),
+            liquidity
+        );
     }
 }

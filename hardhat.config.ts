@@ -4,10 +4,12 @@ require("regenerator-runtime/runtime");
 require("dotenv").config();
 import { HardhatUserConfig } from "hardhat/config";
 import "@nomiclabs/hardhat-waffle";
+import "@nomiclabs/hardhat-etherscan";
 import "hardhat-gas-reporter";
 import "hardhat-tracer";
 import "hardhat-docgen";
 import "solidity-coverage";
+
 
 const config: HardhatUserConfig = {
   solidity: {
@@ -15,7 +17,7 @@ const config: HardhatUserConfig = {
     settings: {
       optimizer: {
         enabled: true,
-        runs: 10000
+        runs: 10000,
       },
     },
   },
@@ -27,6 +29,18 @@ const config: HardhatUserConfig = {
       blockGasLimit: 10000000,
       gas: 10000000,
       allowUnlimitedContractSize: true,
+    },
+    rinkeby: {
+      url: `https://rinkeby.infura.io/v3/${process.env.INFURA_API_KEY}`,
+      accounts: [process.env.PRIVATE_KEY],
+      gasPrice: 1 * 1000000000,
+      gas: 5000000,
+    },
+    mainnet: {
+      url: `https://mainnet.infura.io/v3/${process.env.INFURA_API_KEY}`,
+      accounts: [process.env.PRIVATE_KEY],
+      gasPrice: 45 * 1000000000,
+      gas: 5000000,
     },
   },
   // gasReporter: {
@@ -42,6 +56,9 @@ const config: HardhatUserConfig = {
   mocha: {
     timeout: "200000",
   },
+  etherscan: {
+    apiKey: process.env.ETHERSCAN_API_KEY,
+  }
 };
 
 export default config;
