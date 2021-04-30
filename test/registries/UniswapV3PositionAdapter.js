@@ -6,7 +6,7 @@ const logPositionDetail = (positionDetail) => {
   logger.info(`Token address: ${positionDetail.token.toString()}`);
   logger.info(`In-pool amount: ${positionDetail.amount.toString()}`);
   logger.info(`Out-pool amount: ${positionDetail.tokensOwed.toString()}`);
-  logger.info(`Fees amount: ${positionDetail.feeGrowth.toString()}`);
+  logger.info(`Fee amount: ${positionDetail.fee.toString()}`);
 };
 
 const logPositionDetails = (positionDetails, tokenId) => {
