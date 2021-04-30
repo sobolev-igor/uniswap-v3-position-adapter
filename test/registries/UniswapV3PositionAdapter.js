@@ -2,17 +2,17 @@ const { logger } = require('ethers');
 
 const { ethers } = require('hardhat');
 
-const logPositionDetails = (positionDetails, tokenId) => {
-  logger.info(`The position #${tokenId} details:`);
-  logPositionDetail(positionDetails[0]);
-  logPositionDetail(positionDetails[1]);
-};
-
 const logPositionDetail = (positionDetail) => {
   logger.info(`Token address: ${positionDetail.token.toString()}`);
   logger.info(`In-pool amount: ${positionDetail.amount.toString()}`);
   logger.info(`Out-pool amount: ${positionDetail.tokensOwed.toString()}`);
   logger.info(`Fees amount: ${positionDetail.feeGrowth.toString()}`);
+};
+
+const logPositionDetails = (positionDetails, tokenId) => {
+  logger.info(`The position #${tokenId} details:`);
+  logPositionDetail(positionDetails[0]);
+  logPositionDetail(positionDetails[1]);
 };
 
 describe('UniswapV3PositionAdapter', () => {
@@ -30,7 +30,10 @@ describe('UniswapV3PositionAdapter', () => {
 
   it('should be correct position interpretation', async () => {
     const tokenId = 8;
-    let positionDetails = await adapter.getPositionDetails(rinkebyUniswapPositionManagerAddress, tokenId);
+    let positionDetails = await adapter.getPositionDetails(
+      rinkebyUniswapPositionManagerAddress,
+      tokenId,
+    );
     logPositionDetails(positionDetails, tokenId);
   });
 });

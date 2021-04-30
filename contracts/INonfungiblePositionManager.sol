@@ -23,10 +23,7 @@ interface INonfungiblePositionManager {
     /// @dev The interface is the same as Uniswap's but with returned values wrapped in a struct.
     /// @param tokenId The ID of the token that represents the position
     /// @return position Position struct with the position information
-    function positions(uint256 tokenId)
-        external
-        view
-        returns (Position memory position);
+    function positions(uint256 tokenId) external view returns (Position memory position);
 
     /// @return Returns the address of the Uniswap V3 factory
     function factory() external view returns (address);
