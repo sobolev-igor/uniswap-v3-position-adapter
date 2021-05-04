@@ -1,5 +1,5 @@
 {
-  "name": "zerion-defi-sdk",
+  "name": "uniswap-v3-position-adapter",
   "version": "1.0.0",
   "main": "truffle.js",
   "directories": {
@@ -10,7 +10,9 @@
     "compile": "npx hardhat compile",
     "deploy:development": "npx hardhat run scripts/deploy.js --network development",
     "deploy:mainnet": "npx hardhat run scripts/deploy.js --network mainnet",
-    "deploy:kovan": "npx hardhat run scripts/deploy.js --network kovan",
+    "verify:mainnet": "npx hardhat verify --network mainnet",
+    "deploy:rinkeby": "npx hardhat run scripts/deploy.js --network rinkeby",
+    "verify:rinkeby": "npx hardhat verify --network rinkeby",
     "test": "npx hardhat test --show-stack-traces",
     "coverage": "npx hardhat coverage --network hardhat",
     "lint:solhint": "npx solhint \"contracts/**/*.sol\"",
@@ -22,9 +24,9 @@
     "test/**/*.js": "npx eslint --fix",
     "migrations_scripts/*.js": "npx eslint --fix"
   },
-  "author": "Zerion Inc.",
-  "license": "LGPL-3.0-only",
-  "repository": "https://github.com/zeriontech/defi-sdk",
+  "author": "Igor Sobolev",
+  "license": "MIT",
+  "repository": "https://github.com/sobolev-igor/uniswap-v3-position-adapter",
   "dependencies": {
     "@uniswap/v3-core": "1.0.0-rc.2",
     "@uniswap/v3-periphery": "1.0.0-beta.23"
