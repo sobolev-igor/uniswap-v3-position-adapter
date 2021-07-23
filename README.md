@@ -6,6 +6,7 @@ The mainnet address is [0x497160ebC6CbF3556826540737D255c002f80360](https://ethe
 
 The rinkeby testnet address is [0x4B774683346df9271f5bDbE03e15F20A74dc64Cc](https://rinkeby.etherscan.io/address/0x4B774683346df9271f5bDbE03e15F20A74dc64Cc#code).
 
+> NOTE For all the networks, **NonfungibleTokenPositionDescriptor** address is [0x91ae842A5Ffd8d12023116943e72A606179294f3](https://etherscan.io/address/0x91ae842A5Ffd8d12023116943e72A606179294f3#code).
 
 Every Uniswap V3 position is interpreted as a pair of `PositionDetail` structs. Every struct is an underlying token address and the following three numbers:
 
